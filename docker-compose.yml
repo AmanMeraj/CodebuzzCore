@@ -1,0 +1,61 @@
+# Production stack: MySQL + app + Caddy (automatic HTTPS).
+# Run:  docker compose up -d --build
+services:
+  mysql:
+    image: mysql:8.4
+    restart: always
+    environment:
+      MYSQL_DATABASE: codebuzzcore
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=512M
+      --max-connections=100
+    volumes:
+      - codebuzzcore-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    # No "ports:" on purpose - MySQL is reachable only inside the Docker network.
+
+  app:
+    build: .
+    restart: always
+    env_file: .env
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/codebuzzcore?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      REQUIRE_SECRETS: "true"
+      DEV_EXPOSE_RESET_TOKEN: "false"
+      SERVER_FORWARD_HEADERS_STRATEGY: native
+      SPRINGDOC_API_DOCS_ENABLED: "false"
+      SPRINGDOC_SWAGGER_UI_ENABLED: "false"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    # No "ports:" - only Caddy talks to the app.
+
+  caddy:
+    image: caddy:2
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+
+volumes:
+  codebuzzcore-mysql:
+  caddy-data:
+  caddy-config:

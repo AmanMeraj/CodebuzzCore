@@ -1,0 +1,8 @@
+package com.codebuzzers.codebuzzcore.billing;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+public interface PlanFeatureRepository extends JpaRepository<PlanFeature, Long> {
+    List<PlanFeature> findByPlanIdAndEnabledTrue(Long planId);
+}

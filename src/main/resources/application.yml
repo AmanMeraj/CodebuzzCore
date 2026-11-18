@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: codebuzzcore
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/codebuzzcore?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DB_USERNAME:codebuzz}
+    password: ${DB_PASSWORD:codebuzz}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+app:
+  require-secrets: ${REQUIRE_SECRETS:false}
+  jwt:
+    secret: ${JWT_SECRET:}
+    access-ttl: 15m
+    refresh-ttl: 30d
+  crypto:
+    token-key: ${TOKEN_ENCRYPTION_KEY:}
+  meta:
+    app-id: ${META_APP_ID:}
+    app-secret: ${META_APP_SECRET:}
+    webhook-verify-token: ${META_WEBHOOK_VERIFY_TOKEN:}
+    graph-version: ${META_GRAPH_VERSION:v26.0}
+    oauth-redirect-uri: ${META_OAUTH_REDIRECT_URI:http://localhost:8080/api/v1/meta/callback}
+    success-redirect: ${META_SUCCESS_REDIRECT:}
+    config-id: ${META_CONFIG_ID:}
+  fcm:
+    server-key: ${FCM_SERVER_KEY:}
+  dev:
+    expose-reset-token: ${DEV_EXPOSE_RESET_TOKEN:false}
+  worker:
+    poll-delay-ms: 2000
+    batch-size: 8
+    max-attempts: 8
+
+logging:
+  level:
+    com.codebuzzers: INFO
